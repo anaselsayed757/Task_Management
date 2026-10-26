@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - TaskFlow</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+
+    <style>
+        /* ✅ MODAL STYLES */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.4);
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+        }
+        .modal.active { display: flex; }
+        .modal-content {
+            background: #fff;
+            border-radius: 10px;
+            width: 90%;
+            max-width: 500px;
+            padding: 20px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+            animation: fadeIn 0.25s ease;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: scale(0.95); }
+            to { opacity: 1; transform: scale(1); }
+        }
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 1.5em;
+            cursor: pointer;
+        }
+
+        /* ✅ DEADLINE ALERT */
+        .deadline-warning {
+            background: #fff3cd;
+            border: 1px solid #ffeeba;
+            color: #856404;
+            padding: 12px 14px;
+            border-radius: 6px;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.95rem;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            transition: opacity 0.3s ease;
+        }
+        .deadline-warning i { font-style: normal; }
+
+        /* ✅ TASK GRID EMPTY STATE */
+        .empty-state {
+            text-align: center;
+            margin-top: 30px;
+            padding: 20px;
+            color: #666;
+        }
+        .empty-icon { font-size: 3rem; margin-bottom: 10px; }
+    </style>
+</head>
+<body>
+    <div class="dashboard">
+        <!-- SIDEBAR -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <h1>📋 TaskFlow</h1>
+            </div>
+
+            <nav class="sidebar-nav">
+                <a href="#" class="nav-item active" data-view="all"><span class="icon">📊</span> All Tasks</a>
+                <a href="#" class="nav-item" data-view="todo"><span class="icon">📝</span> To Do</a>
+                <a href="#" class="nav-item" data-view="in_progress"><span class="icon">⚡</span> In Progress</a>
+                <a href="#" class="nav-item" data-view="completed"><span class="icon">✅</span> Completed</a>
+                <div class="nav-divider"></div>
+                <a href="#" class="nav-item" data-view="high"><span class="icon">🔴</span> High Priority</a>
+                <a href="#" class="nav-item" data-view="overdue"><span class="icon">⚠️</span> Overdue</a>
+            </nav>
+
+            <div class="sidebar-footer">
+                <div class="user-info">
+                    <div class="user-avatar">{{ user.username[0].upper() }}</div>
+                    <div class="user-details">
+                        <div class="user-name">{{ user.username }}</div>
+                        <div class="user-email">{{ user.email }}</div>
+                    </div>
+                </div>
+                <a href="{{ url_for('logout') }}" class="btn btn-outline btn-small">Logout</a>
+            </div>
+        </aside>
+
+        <!-- MAIN CONTENT -->
+        <main class="main-content">
+            <!-- HEADER -->
+            <header class="dashboard-header">
+                <div class="header-left">
+                    <h2 id="viewTitle">All Tasks</h2>
+                    <p id="viewSubtitle">Manage and track your tasks efficiently</p>
+                </div>
+                <div class="header-right">
+                    <button class="btn btn-primary" id="newTaskBtn"><span>+ New Task</span></button>
+                </div>
+            </header>
+
+            <!-- ✅ DEADLINE ALERT (Server-side fallback) -->
+            {% if approaching_tasks and approaching_tasks|length > 0 %}
+                <div class="deadline-warning">
+                    <i>⏰</i>
+                    <span>
+                        You have <strong>{{ approaching_tasks|length }}</strong> task{{ 's' if approaching_tasks|length > 1 else '' }}
+                        with deadlines approaching soon!
+                    </span>
+                </div>
+                <ul style="margin-left: 15px; margin-bottom: 15px; font-size: 0.9rem;">
+                    {% for task in approaching_tasks %}
+                        <li><strong>{{ task.title }}</strong> — due {{ task.deadline.strftime("%Y-%m-%d %H:%M") }}</li>
+                    {% endfor %}
+                </ul>
+            {% endif %}
+
+            <!-- STATS -->
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-icon" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">📋</div>
+                    <div class="stat-content"><div class="stat-value" id="totalTasks">0</div><div class="stat-label">Total</div></div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);">⚡</div>
+                    <div class="stat-content"><div class="stat-value" id="inProgressTasks">0</div><div class="stat-label">In Progress</div></div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);">✅</div>
+                    <div class="stat-content"><div class="stat-value" id="completedTasks">0</div><div class="stat-label">Completed</div></div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon" style="background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);">⚠️</div>
+                    <div class="stat-content"><div class="stat-value" id="overdueTasks">0</div><div class="stat-label">Overdue</div></div>
+                </div>
+            </div>
+
+            <!-- FILTERS -->
+            <div class="filters-bar">
+                <input type="text" id="searchInput" placeholder="Search tasks..." class="search-input">
+                <select id="priorityFilter" class="filter-select">
+                    <option value="">All Priorities</option>
+                    <option value="high">High</option>
+                    <option value="medium">Medium</option>
+                    <option value="low">Low</option>
+                </select>
+                <select id="sortBy" class="filter-select">
+                    <option value="created_desc">Newest First</option>
+                    <option value="created_asc">Oldest First</option>
+                    <option value="deadline_asc">Deadline (Soonest)</option>
+                    <option value="priority_desc">Priority (High → Low)</option>
+                </select>
+            </div>
+
+            <!-- TASK GRID -->
+            <div id="tasksContainer" class="tasks-grid"></div>
+
+            <!-- EMPTY STATE -->
+            <div id="emptyState" class="empty-state" style="display: none;">
+                <div class="empty-icon">📭</div>
+                <h3>No tasks found</h3>
+                <p>Create your first task to get started!</p>
+                <button class="btn btn-primary" onclick="document.getElementById('newTaskBtn').click()">Create Task</button>
+            </div>
+        </main>
+    </div>
+
+    <!-- ✅ TASK MODAL -->
+    <div id="taskModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="modalTitle">Create New Task</h3>
+                <button class="modal-close" onclick="closeTaskModal()">&times;</button>
+            </div>
+            <form id="taskForm">
+                <input type="hidden" id="taskId">
+
+                <div class="form-group">
+                    <label for="taskTitle">Title *</label>
+                    <input type="text" id="taskTitle" required placeholder="Enter task title">
+                </div>
+
+                <div class="form-group">
+                    <label for="taskDescription">Description</label>
+                    <textarea id="taskDescription" rows="4" placeholder="Enter task description"></textarea>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="taskPriority">Priority</label>
+                        <select id="taskPriority">
+                            <option value="low">Low</option>
+                            <option value="medium" selected>Medium</option>
+                            <option value="high">High</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="taskStatus">Status</label>
+                        <select id="taskStatus">
+                            <option value="todo" selected>To Do</option>
+                            <option value="in_progress">In Progress</option>
+                            <option value="completed">Completed</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="taskDeadline">Deadline</label>
+                        <input type="datetime-local" id="taskDeadline">
+                    </div>
+                    <div class="form-group">
+                        <label for="taskAssignee">Assign To</label>
+                        <select id="taskAssignee">
+                            <option value="">Myself</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="modal-actions">
+                    <button type="button" class="btn btn-outline" onclick="closeTaskModal()">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save Task</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- ✅ JS (deferred load) -->
+    <script src="{{ url_for('static', filename='js/app.js') }}" defer></script>
+</body>
+</html>

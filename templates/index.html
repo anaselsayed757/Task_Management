@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TaskFlow - Task Management System</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="landing-page">
+        <nav class="navbar">
+            <div class="container">
+                <div class="logo">
+                    <h1>📋 TaskFlow</h1>
+                </div>
+                <div class="nav-links">
+                    <a href="{{ url_for('login') }}" class="btn btn-outline">Login</a>
+                    <a href="{{ url_for('register') }}" class="btn btn-primary">Get Started</a>
+                </div>
+            </div>
+        </nav>
+
+        <section class="hero">
+            <div class="container">
+                <div class="hero-content">
+                    <h1 class="hero-title">Organize Your Tasks.<br>Achieve Your Goals.</h1>
+                    <p class="hero-subtitle">A powerful task management system designed for students and teams to collaborate efficiently and stay productive.</p>
+                    <div class="hero-buttons">
+                        <a href="{{ url_for('register') }}" class="btn btn-primary btn-large">Start Free Today</a>
+                        <a href="{{ url_for('login') }}" class="btn btn-outline btn-large">Sign In</a>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="features">
+            <div class="container">
+                <h2 class="section-title">Why Choose TaskFlow?</h2>
+                <div class="features-grid">
+                    <div class="feature-card">
+                        <div class="feature-icon">✅</div>
+                        <h3>Smart Task Management</h3>
+                        <p>Create, organize, and track tasks with priorities and deadlines</p>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon">👥</div>
+                        <h3>Team Collaboration</h3>
+                        <p>Assign tasks to team members and work together seamlessly</p>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon">📊</div>
+                        <h3>Interactive Dashboard</h3>
+                        <p>Visualize your progress with real-time statistics and insights</p>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon">📅</div>
+                        <h3>Deadline Tracking</h3>
+                        <p>Never miss a deadline with smart notifications and reminders</p>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon">🔍</div>
+                        <h3>Advanced Filtering</h3>
+                        <p>Filter and sort tasks by status, priority, and more</p>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon">📱</div>
+                        <h3>Mobile Responsive</h3>
+                        <p>Access your tasks anywhere, on any device</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="cta">
+            <div class="container">
+                <h2>Ready to Get Organized?</h2>
+                <p>Join thousands of students and teams managing their tasks efficiently</p>
+                <a href="{{ url_for('register') }}" class="btn btn-primary btn-large">Get Started Free</a>
+            </div>
+        </section>
+
+        <footer>
+            <div class="container">
+                <p>&copy; 2025 TaskFlow. Built with ❤️ for productivity.</p>
+            </div>
+        </footer>
+    </div>
+</body>
+</html>
+
